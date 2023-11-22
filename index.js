@@ -15,7 +15,15 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-const configFile = fs.readFileSync("config.yml", 'utf8');
+const configFilePathIndex = process.argv.indexOf('-c');
+if (configFilePathIndex === -1 || process.argv.length <= configFilePathIndex + 1) {
+    console.error('Please provide the path to the configuration file using -c argument.');
+    process.exit(1);
+}
+
+const configFilePath = process.argv[configFilePathIndex + 1];
+
+const configFile = fs.readFileSync(configFilePath, 'utf8');
 const config = yaml.load(configFile);
 
 app.set('view engine', 'ejs');
