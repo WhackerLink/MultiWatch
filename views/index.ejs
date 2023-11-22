@@ -11,13 +11,16 @@
 <body>
 <div class="container">
     <h1>Multi Network Watch</h1>
-    <% networks.forEach(function(network) { %>
-        <div class="network-box mb-4" id="network-<%= network.name %>">
-            <h2><%= network.name %></h2>
-            <div class="control-channels-container">
+    <div class="row">
+        <% networks.forEach(function(network) { %>
+            <div class="col-md-4">
+                <div class="network-box mb-4" id="network-<%= network.name %>">
+                    <h2><%= network.name %></h2>
+                    <div class="control-channels-container"></div>
+                </div>
             </div>
-        </div>
-    <% }); %>
+        <% }); %>
+    </div>
 </div>
 
 <script>
@@ -61,7 +64,6 @@
     .network-box {
         border: 1px solid #ccc;
         padding: 15px;
-        margin-bottom: 20px;
     }
 </style>
 </html>
