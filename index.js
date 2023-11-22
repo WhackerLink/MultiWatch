@@ -26,6 +26,8 @@ const configFilePath = process.argv[configFilePathIndex + 1];
 const configFile = fs.readFileSync(configFilePath, 'utf8');
 const config = yaml.load(configFile);
 
+app.set('views', path.join(__dirname, 'views'))
+
 app.set('view engine', 'ejs');
 
 const networkSockets = [];
