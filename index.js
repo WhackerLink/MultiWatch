@@ -29,7 +29,7 @@ const config = yaml.load(configFile);
 
 const __dirname = path.resolve();
 
-app.set('views', path.join(__dirname, 'views'))
+app.set('views', path.join(__dirname, `${config.path}/views`))
 
 app.set('view engine', 'ejs');
 
