@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi Network Watch</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="container">
+    <h1>Multi Network Watch</h1>
+    <% networks.forEach(function(network) { %>
+        <div class="network-box mb-4" id="network-<%= network.name %>">
+            <h2><%= network.name %></h2>
+            <div class="control-channels-container">
+            </div>
+        </div>
+    <% }); %>
+</div>
+
+<script>
+    const socket = io();
+
+    socket.on('networkUpdate', function(update) {
+        const networkElement = document.getElementById(`network-${update.network}`);
+        if (!networkElement) return;
+
+        const controlChannelsContainer = networkElement.querySelector('.control-channels-container');
+        controlChannelsContainer.innerHTML = '';
+
+        update.data.forEach(controlChannelInfo => {
+            const controlChannelDiv = document.createElement('div');
+            controlChannelDiv.className = 'control-channel-box';
+            controlChannelDiv.id = `control-channel-${update.network}-${controlChannelInfo.controlChannel}`;
+            controlChannelDiv.innerHTML = `
+                <h3>${controlChannelInfo.controlChannel}</h3>
+                <div class="voice-channels-list"></div>
+            `;
+            controlChannelsContainer.appendChild(controlChannelDiv);
+
+            const voiceChannelsList = controlChannelDiv.querySelector('.voice-channels-list');
+            controlChannelInfo.voiceChannels.forEach(voiceChannel => {
+                const voiceChannelDiv = document.createElement('div');
+                voiceChannelDiv.className = 'card mb-2';
+                voiceChannelDiv.innerHTML = `
+                    <div class="card-body">
+                        <h5 class="card-title">Voice Channel: ${voiceChannel.voiceChannel}</h5>
+                        <p class="card-text">Dst ID: ${voiceChannel.dstId}</p>
+                        <p class="card-text">Src ID: ${voiceChannel.srcId}</p>
+                    </div>
+                `;
+                voiceChannelsList.appendChild(voiceChannelDiv);
+            });
+        });
+    });
+</script>
+</body>
+<style>
+    .network-box {
+        border: 1px solid #ccc;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+</style>
+</html>
