@@ -10,6 +10,7 @@ import yaml from 'js-yaml';
 import { Server } from 'socket.io';
 import { io as socketClient } from 'socket.io-client';
 import fs from 'fs';
+import path from 'path';
 
 const app = express();
 const server = http.createServer(app);
