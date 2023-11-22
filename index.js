@@ -10,7 +10,7 @@ import yaml from 'js-yaml';
 import { Server } from 'socket.io';
 import { io as socketClient } from 'socket.io-client';
 import fs from 'fs';
-import { path, dirname } from 'path';
+import  path from 'path';
 
 const app = express();
 const server = http.createServer(app);
@@ -26,6 +26,8 @@ const configFilePath = process.argv[configFilePathIndex + 1];
 
 const configFile = fs.readFileSync(configFilePath, 'utf8');
 const config = yaml.load(configFile);
+
+const __dirname = path.resolve();
 
 app.set('views', path.join(__dirname, 'views'))
 
