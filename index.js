@@ -48,10 +48,38 @@ async function fetchVoiceChannelData() {
     }
 }
 
-setInterval(fetchVoiceChannelData, 1000);
+async function fetchAffiliationsData() {
+    try {
+        const networkDataPromises = config.networks.map(async (network) => {
+            try {
+                const response = await axios.get(`${network.url}/api/affiliations`);
+                return { name: network.name, data: response.data, status: 'connected' };
+            } catch (error) {
+                console.error(`Error fetching affiliation data from network ${network.name}:`, error);
+                return { name: network.name, status: 'failed' };
+            }
+        });
+
+        const networkData = await Promise.all(networkDataPromises);
+        io.emit('affiliationsUpdate', networkData);
+    } catch (error) {
+        console.error('Error fetching affiliations data:', error);
+    }
+}
+
+async function fetchAllData() {
+    fetchVoiceChannelData();
+    fetchAffiliationsData();
+}
+
+setInterval(fetchAllData, 1000);
 
 app.get('/', (req, res) => {
     res.render('index', { networks: config.networks });
+});
+
+app.get('/affiliations', (req, res) => {
+    res.render('affiliations', { networks: config.networks });
 });
 
 server.listen(config.listenPort, config.bindAddress, () => {

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Affiliations</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/styles.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<%- include("partials/header") %>
+<div class="container mt-4">
+    <h1>Affiliations</h1>
+    <div id="affiliations-container"></div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const socket = io();
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const body = document.body;
+
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            body.classList.add('dark-mode');
+            darkModeToggle.textContent = 'Light Mode';
+        }
+
+        darkModeToggle.addEventListener('click', function() {
+            body.classList.toggle('dark-mode');
+            if (body.classList.contains('dark-mode')) {
+                localStorage.setItem('darkMode', 'enabled');
+                darkModeToggle.textContent = 'Light Mode';
+            } else {
+                localStorage.removeItem('darkMode');
+                darkModeToggle.textContent = 'Dark Mode';
+            }
+        });
+
+        socket.on('affiliationsUpdate', function(networks) {
+            renderAffiliations(networks);
+        });
+
+        function renderAffiliations(networks) {
+            const container = document.getElementById('affiliations-container');
+            container.innerHTML = '';
+
+            networks.forEach(network => {
+                const networkBox = document.createElement('div');
+                networkBox.className = 'network-box mb-4';
+                networkBox.innerHTML = `
+                    <h2>${network.name}</h2>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Source ID</th>
+                                <th>Destination ID</th>
+                            </tr>
+                        </thead>
+                        <tbody class="affiliations-tbody">
+                        </tbody>
+                    </table>
+                `;
+
+                const tableBody = networkBox.querySelector('.affiliations-tbody');
+
+                if (network.status === 'connected') {
+                    if (network.data.length > 0) {
+                        network.data.forEach(affiliation => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${affiliation.srcId}</td>
+                                <td>${affiliation.dstId}</td>
+                            `;
+                            tableBody.appendChild(row);
+                        });
+                    } else {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td colspan="2">No affiliations</td>
+                        `;
+                        tableBody.appendChild(row);
+                    }
+                } else {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td colspan="2">Connection Failed</td>
+                    `;
+                    tableBody.appendChild(row);
+                }
+
+                container.appendChild(networkBox);
+            });
+        }
+    });
+</script>
+</body>
+</html>
