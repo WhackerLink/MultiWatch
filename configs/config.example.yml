@@ -1,0 +1,11 @@
+# Port to bind the server to
+listenPort: 3000
+# Address to bind the server to
+bindAddress: 127.0.0.1
+
+# List of networks to connect to
+networks:
+    # Textual alias for the network
+  - name: "Dev Master 1"
+    # URL to connect to
+    url: "http://127.0.0.1:3002"

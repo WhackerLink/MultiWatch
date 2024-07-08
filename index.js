@@ -1,16 +1,14 @@
-/*
-    Written by Caleb, KO4UYJ
-    Discord: _php_
-    Email: ko4uyj@gmail.com
- */
-
 import express from 'express';
 import http from 'http';
 import yaml from 'js-yaml';
 import { Server } from 'socket.io';
-import { io as socketClient } from 'socket.io-client';
 import fs from 'fs';
-import  path from 'path';
+import path from 'path';
+import axios from 'axios';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);
@@ -23,43 +21,39 @@ if (configFilePathIndex === -1 || process.argv.length <= configFilePathIndex + 1
 }
 
 const configFilePath = process.argv[configFilePathIndex + 1];
-
 const configFile = fs.readFileSync(configFilePath, 'utf8');
 const config = yaml.load(configFile);
 
-const __dirname = path.resolve();
-
-app.set('views', path.join(__dirname, `${config.path}/views`))
+app.set('views', path.join(__dirname, 'views'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.set('view engine', 'ejs');
 
-const networkSockets = [];
+async function fetchVoiceChannelData() {
+    try {
+        const networkDataPromises = config.networks.map(async (network) => {
+            try {
+                const response = await axios.get(`${network.url}/api/voiceChannel/query`);
+                return { name: network.name, data: response.data, status: 'connected' };
+            } catch (error) {
+                console.error(`Error fetching data from network ${network.name}:`, error);
+                return { name: network.name, status: 'failed' };
+            }
+        });
 
-config.networks.forEach(network => {
-    const netSocket = socketClient(network.url, {
-        query: { token: network.token }
-    });
+        const networkData = await Promise.all(networkDataPromises);
+        io.emit('networkUpdate', networkData);
+    } catch (error) {
+        console.error('Error fetching voice channel data:', error);
+    }
+}
 
-    netSocket.on('updateChannels', (data) => {
-        io.emit('networkUpdate', { network: network.name, data });
-    });
-
-    netSocket.on('connect', () => {
-        console.log(`Connected to network: ${network.name}`);
-    });
-
-    networkSockets.push(netSocket);
-});
-io.on('connection', (clientSocket) => {
-    networkSockets.forEach(netSocket => {
-        netSocket.emit('REQUEST_CHANNEL_UPDATES');
-    });
-});
+setInterval(fetchVoiceChannelData, 1000);
 
 app.get('/', (req, res) => {
     res.render('index', { networks: config.networks });
 });
 
 server.listen(config.listenPort, config.bindAddress, () => {
-    console.log('Multi Watch started on', config.bindAddress, ':', config.listenPort);
+    console.log(`Multi Watch started on http://${config.bindAddress}:${config.listenPort}`);
 });
