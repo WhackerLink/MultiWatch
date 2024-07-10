@@ -20,6 +20,7 @@
             <th>Source ID</th>
             <th>Destination ID</th>
             <th>Response Type</th>
+            <th>Time</th>
         </tr>
         </thead>
         <tbody></tbody>
@@ -76,6 +77,12 @@
             }
         });
 
+        const reports = JSON.parse('<%- JSON.stringify(reports) %>'); // man that is ugly
+
+        reports.forEach(report => {
+            renderReport(report);
+        });
+
         socket.on('report', function(report) {
             renderReport(report);
         });
@@ -109,6 +116,7 @@
                 <td>${report.SrcId || 'N/A'}</td>
                 <td>${report.DstId || 'N/A'}</td>
                 <td>${ResponseTypes[parseInt(report.ResponseType)]}</td>
+                <td>${report.Timestamp}</td>
             `;
             tableBody.insertBefore(row, tableBody.firstChild);
         }

@@ -43,7 +43,7 @@
         function renderNetworks(networks) {
             const container = document.getElementById('network-container');
             container.innerHTML = '';
-
+            console.log(networks)
             networks.forEach(network => {
                 const networkBox = document.createElement('div');
                 networkBox.className = 'col-md-4';

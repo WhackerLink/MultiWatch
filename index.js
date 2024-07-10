@@ -58,6 +58,8 @@ const ResponseType = Object.freeze({
     0xFF: "N/A"
 });
 
+let reports = [];
+
 async function fetchVoiceChannelData() {
     try {
         const networkDataPromises = config.networks.map(async (network) => {
@@ -109,13 +111,18 @@ app.get('/', (req, res) => {
 
 app.post('/', (req, res) => {
     // console.log(req.body);
+    reports.push(req.body);
+    if (reports.length > 15) {
+        reports.shift();
+    }
+    console.log(reports);
     console.log(`${PacketTypes[req.body.Type]}, srcId: ${req.body.SrcId}, dstId: ${req.body.DstId}, ResponseType: ${ResponseType[req.body.ResponseType]}`);
     io.emit("report", req.body);
     res.status(200).send();
 });
 
 app.get('/reports', (req, res) => {
-    res.render('reports', { ResponseType, PacketTypes });
+    res.render('reports', { reports });
 });
 
 app.get('/affiliations', (req, res) => {
