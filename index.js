@@ -118,6 +118,10 @@ app.get('/reports', (req, res) => {
     res.render('reports', { ResponseType, PacketTypes });
 });
 
+app.get('/affiliations', (req, res) => {
+    res.render('affiliations');
+});
+
 server.listen(config.listenPort, config.bindAddress, () => {
     console.log(`Multi Watch started on http://${config.bindAddress}:${config.listenPort}`);
 });
