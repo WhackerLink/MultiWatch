@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/styles.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<%- include("partials/header") %>
+
+<div class="container mt-4">
+    <h1>Reports</h1>
+    <table class="table table-bordered" id="reports-table">
+        <thead>
+        <tr>
+            <th>Type</th>
+            <th>Source ID</th>
+            <th>Destination ID</th>
+            <th>Response Type</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const socket = io();
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const body = document.body;
+
+        const PacketTypes = Object.freeze({
+            0: "UNKOWN",
+            1: "AUDIO_DATA",
+            2: "GRP_AFF_REQ",
+            3: "GRP_AFF_RSP",
+            4: "AFF_UPDATE",
+            5: "GRP_VCH_REQ",
+            6: "GRP_VCH_RLS",
+            7: "GRP_VCH_RSP",
+            8: "U_REG_REQ",
+            9: "U_REG_RSP",
+            10: "U_DE_REG_REQ",
+            11: "U_DE_REG_RSP",
+            12: "EMRG_ALRM_REQ",
+            13: "EMRG_ALRM_RSP",
+            14: "CALL_ALRT",
+            15: "CALL_ALRT_REQ"
+        });
+
+        const ResponseTypes = Object.freeze({
+            0: "Grant",
+            1: "Reject",
+            2: "Deny",
+            3: "Refuse",
+            4: "Fail",
+            0xFF: "N/A"
+        });
+
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            body.classList.add('dark-mode');
+            darkModeToggle.textContent = 'Light Mode';
+        }
+
+        darkModeToggle.addEventListener('click', function() {
+            body.classList.toggle('dark-mode');
+            if (body.classList.contains('dark-mode')) {
+                localStorage.setItem('darkMode', 'enabled');
+                darkModeToggle.textContent = 'Light Mode';
+            } else {
+                localStorage.removeItem('darkMode');
+                darkModeToggle.textContent = 'Dark Mode';
+            }
+        });
+
+        socket.on('report', function(report) {
+            renderReport(report);
+        });
+
+
+        function renderReport(report) {
+            const tableBody = document.getElementById('reports-table').querySelector('tbody');
+            const row = document.createElement('tr');
+            const responseType = report.ResponseType;
+
+            switch (responseType){
+                case 0:
+                    row.classList.add("bg-success");
+                    break;
+                case 1:
+                    row.classList.add("bg-danger");
+                    break;
+                case 2:
+                    row.classList.add("bg-warning");
+                    break;
+                case 3:
+                case 4:
+                    row.classList.add("bg-danger");
+                    break;
+                case 0xFF:
+                    row.classList.add("bg-primary");
+            }
+
+            row.innerHTML = `
+                <td>${PacketTypes[report.Type]}</td>
+                <td>${report.SrcId || 'N/A'}</td>
+                <td>${report.DstId || 'N/A'}</td>
+                <td>${ResponseTypes[parseInt(report.ResponseType)]}</td>
+            `;
+            tableBody.insertBefore(row, tableBody.firstChild);
+        }
+    });
+</script>
+</body>
+</html>

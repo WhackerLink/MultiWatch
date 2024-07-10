@@ -26,8 +26,37 @@ const config = yaml.load(configFile);
 
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json())
 
 app.set('view engine', 'ejs');
+
+const PacketTypes = Object.freeze({
+    0: "UNKOWN",
+    1: "AUDIO_DATA",
+    2: "GRP_AFF_REQ",
+    3: "GRP_AFF_RSP",
+    4: "AFF_UPDATE",
+    5: "GRP_VCH_REQ",
+    6: "GRP_VCH_RLS",
+    7: "GRP_VCH_RSP",
+    8: "U_REG_REQ",
+    9: "U_REG_RSP",
+    10: "U_DE_REG_REQ",
+    11: "U_DE_REG_RSP",
+    12: "EMRG_ALRM_REQ",
+    13: "EMRG_ALRM_RSP",
+    14: "CALL_ALRT",
+    15: "CALL_ALRT_REQ"
+});
+
+const ResponseType = Object.freeze({
+    1: "GRANT",
+    2: "REJECT",
+    3: "DENY",
+    4: "REFUSE",
+    5: "FAIL",
+    0xFF: "N/A"
+});
 
 async function fetchVoiceChannelData() {
     try {
@@ -44,7 +73,7 @@ async function fetchVoiceChannelData() {
         const networkData = await Promise.all(networkDataPromises);
         io.emit('networkUpdate', networkData);
     } catch (error) {
-        console.error('Error fetching voice channel data:', error);
+        //console.error('Error fetching voice channel data:', error);
     }
 }
 
@@ -63,7 +92,7 @@ async function fetchAffiliationsData() {
         const networkData = await Promise.all(networkDataPromises);
         io.emit('affiliationsUpdate', networkData);
     } catch (error) {
-        console.error('Error fetching affiliations data:', error);
+        //console.error('Error fetching affiliations data:', error);
     }
 }
 
@@ -78,8 +107,15 @@ app.get('/', (req, res) => {
     res.render('index', { networks: config.networks });
 });
 
-app.get('/affiliations', (req, res) => {
-    res.render('affiliations', { networks: config.networks });
+app.post('/', (req, res) => {
+    // console.log(req.body);
+    console.log(`${PacketTypes[req.body.Type]}, srcId: ${req.body.SrcId}, dstId: ${req.body.DstId}, ResponseType: ${ResponseType[req.body.ResponseType]}`);
+    io.emit("report", req.body);
+    res.status(200).send();
+});
+
+app.get('/reports', (req, res) => {
+    res.render('reports', { ResponseType, PacketTypes });
 });
 
 server.listen(config.listenPort, config.bindAddress, () => {
