@@ -34,6 +34,7 @@ async function fetchVoiceChannelData() {
         const networkDataPromises = config.networks.map(async (network) => {
             try {
                 const response = await axios.get(`${network.url}/api/voiceChannel/query`);
+                // console.log(response.data)
                 return { name: network.name, data: response.data, status: 'connected' };
             } catch (error) {
                 console.error(`Error fetching data from network ${network.name}:`, error);

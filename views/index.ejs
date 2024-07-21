@@ -48,38 +48,39 @@
                 const networkBox = document.createElement('div');
                 networkBox.className = 'col-md-4';
                 networkBox.innerHTML = `
-                        <div class="network-box mb-4">
-                            <h2>${network.name}</h2>
-                            <div class="control-channels-container"></div>
-                        </div>
-                    `;
+                    <div class="network-box mb-4">
+                        <h2>${network.name}</h2>
+                        <div class="sites-container"></div>
+                    </div>
+                `;
 
-                const controlChannelsContainer = networkBox.querySelector('.control-channels-container');
+                const sitesContainer = networkBox.querySelector('.sites-container');
 
                 if (network.status === 'failed') {
-                    controlChannelsContainer.innerHTML = `<p>Connection Failed</p>`;
+                    sitesContainer.innerHTML = `<p>Connection Failed</p>`;
                 } else {
-                    network.data.controlChannels.forEach(controlChannel => {
-                        const controlChannelDiv = document.createElement('div');
-                        controlChannelDiv.className = 'control-channel-box';
-                        controlChannelDiv.innerHTML = `
-                                <h3>${controlChannel}</h3>
-                                <div class="voice-channels-list"></div>
-                            `;
-                        controlChannelsContainer.appendChild(controlChannelDiv);
+                    network.data.sites.forEach(site => {
+                        const siteDiv = document.createElement('div');
+                        siteDiv.className = 'site-box';
+                        siteDiv.innerHTML = `
+                            <h3>${site.name}</h3>
+                            <p>Control Channel: ${site.controlChannel}</p>
+                            <div class="voice-channels-list"></div>
+                        `;
+                        sitesContainer.appendChild(siteDiv);
 
-                        const voiceChannelsList = controlChannelDiv.querySelector('.voice-channels-list');
+                        const voiceChannelsList = siteDiv.querySelector('.voice-channels-list');
                         network.data.activeVoiceChannels.forEach(voiceChannel => {
-                            if (voiceChannel.controlChannel === controlChannel) {
+                            if (voiceChannel.site.siteID === site.siteID) {
                                 const voiceChannelDiv = document.createElement('div');
                                 voiceChannelDiv.className = 'card mb-2';
                                 voiceChannelDiv.innerHTML = `
-                                        <div class="card-body">
-                                            <h5 class="card-title">Voice Channel: ${voiceChannel.frequency}</h5>
-                                            <p class="card-text">Dst ID: ${voiceChannel.dstId}</p>
-                                            <p class="card-text">Src ID: ${voiceChannel.srcId}</p>
-                                        </div>
-                                    `;
+                                    <div class="card-body">
+                                        <h5 class="card-title">Voice Channel: ${voiceChannel.frequency}</h5>
+                                        <p class="card-text">Dst ID: ${voiceChannel.dstId}</p>
+                                        <p class="card-text">Src ID: ${voiceChannel.srcId}</p>
+                                    </div>
+                                `;
                                 voiceChannelsList.appendChild(voiceChannelDiv);
                             }
                         });
