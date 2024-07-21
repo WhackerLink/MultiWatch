@@ -55,6 +55,7 @@
                             <tr>
                                 <th>Source ID</th>
                                 <th>Destination ID</th>
+                                <th>Site</th>
                             </tr>
                         </thead>
                         <tbody class="affiliations-tbody">
@@ -71,6 +72,7 @@
                             row.innerHTML = `
                                 <td>${affiliation.srcId}</td>
                                 <td>${affiliation.dstId}</td>
+                                <td>${affiliation.site.name}</td>
                             `;
                             tableBody.appendChild(row);
                         });
