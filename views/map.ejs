@@ -65,6 +65,8 @@
     </style>
 </head>
 <body>
+<button id="toggle-lines" style="position: absolute; top: 10px; left: 10px; z-index: 1000;">Show Lines</button>
+
 <div id="map"></div>
 
 <script>
@@ -155,14 +157,22 @@
 
     const radioMarkers = new Map();
     const emergencyStatus = new Map();
+    const siteLines = new Map();
 
     const socket = io();
 
+    let showLines = false;
+
+    plotSites(JSON.parse('<%- JSON.stringify(sites) %>'));
+
     socket.on('report', (data) => {
-        if (data.Type === 0x12 || data.Type === 0x19) { // 0x12 = emerg req and 0x19 = loc bcast
+        if (data.Type === 0x12 || data.Type === 0x19) { // 0x12 = emerg req, 0x19 = loc bcast
+            console.log('Report data:', data);
+
             const lat = Number(data.Long);
             const lng = Number(data.Lat);
             const srcId = data.SrcId;
+            const site = data.Site;
 
             if (data.Type === 0x12) {
                 emergencyStatus.set(srcId, true);
@@ -181,12 +191,81 @@
             const newMarker = L.marker([lat, lng], {icon: customIcon(iconType, isEmergency)})
                 .addTo(ExampleGroup)
                 .bindPopup(`
-                    Src ID: ${srcId}<br>
-                    ${isEmergency ? '<strong>EMERGENCY ACTIVE</strong>' : ''}
-                    ${isEmergency ? `<button onclick="clearEmergency(${srcId})">Clear Emergency</button>` : ''}
-                `);
+                Src ID: ${srcId}<br>
+                ${isEmergency ? '<strong>EMERGENCY ACTIVE</strong>' : ''}
+                ${isEmergency ? `<button onclick="clearEmergency(${srcId})">Clear Emergency</button>` : ''}
+            `);
+
             radioMarkers.set(srcId, newMarker);
+
+            if (site) {
+                const siteLat = Number(site.Location.Y);
+                const siteLng = Number(site.Location.X);
+
+                if (siteLines.has(srcId)) {
+                    mymap.removeLayer(siteLines.get(srcId));
+                }
+
+                const line = L.polyline([[lat, lng], [siteLat, siteLng]], {
+                    color: 'orange',
+                    weight: 4,
+                    dashArray: '5, 5'
+                });
+
+                if (showLines) {
+                    line.addTo(mymap);
+                }
+
+                siteLines.set(srcId, line);
+            }
         }
+    });
+
+    function plotSites(sites) {
+        console.log(sites);
+        if (sites === undefined || sites === null || sites.length === 0) {
+            return;
+        }
+
+        sites.forEach(site => {
+            const lat = Number(site.Location.Y);
+            const lng = Number(site.Location.X);
+
+            const siteKey = `site-${site.SiteID}`;
+
+            const marker = L.marker([lat, lng], {
+                icon: L.icon({
+                    iconUrl: '/blips/3.png',
+                    iconSize: [60, 60],
+                    iconAnchor: [30, 30],
+                    popupAnchor: [0, -15]
+                })
+            }).addTo(ExampleGroup);
+
+            marker.bindPopup(`
+                <strong>${site.Name}</strong><br>
+                Control Channel: ${site.ControlChannel}<br>
+                Voice Channels: ${site.VoiceChannels.join(', ')}<br>
+                Location: (${lat}, ${lng})<br>
+                Site ID: ${site.SiteID}<br>
+                System ID: ${site.SystemID}<br>
+            `);
+
+            radioMarkers.set(siteKey, marker);
+        });
+    }
+
+    document.getElementById('toggle-lines').addEventListener('click', () => {
+        showLines = !showLines;
+        document.getElementById('toggle-lines').textContent = showLines ? 'Hide Lines' : 'Show Lines';
+
+        siteLines.forEach(line => {
+            if (showLines) {
+                line.addTo(mymap);
+            } else {
+                mymap.removeLayer(line);
+            }
+        });
     });
 
     window.clearEmergency = (srcId) => {
