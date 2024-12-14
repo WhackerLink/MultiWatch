@@ -1,3 +1,23 @@
+/*
+* WhackerLink - Multi Watch
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
+* Copyright (C) 2023-2024 Caleb, K4PHP
+*
+*/
+
 import express from 'express';
 import http from 'http';
 import yaml from 'js-yaml';
@@ -31,22 +51,22 @@ app.use(express.json())
 app.set('view engine', 'ejs');
 
 const PacketTypes = Object.freeze({
-    0: "UNKOWN",
-    1: "AUDIO_DATA",
-    2: "GRP_AFF_REQ",
-    3: "GRP_AFF_RSP",
-    4: "AFF_UPDATE",
-    5: "GRP_VCH_REQ",
-    6: "GRP_VCH_RLS",
-    7: "GRP_VCH_RSP",
-    8: "U_REG_REQ",
-    9: "U_REG_RSP",
-    10: "U_DE_REG_REQ",
-    11: "U_DE_REG_RSP",
-    12: "EMRG_ALRM_REQ",
-    13: "EMRG_ALRM_RSP",
-    14: "CALL_ALRT",
-    15: "CALL_ALRT_REQ"
+    0x0: "UNKOWN",
+    0x1: "AUDIO_DATA",
+    0x2: "GRP_AFF_REQ",
+    0x3: "GRP_AFF_RSP",
+    0x4: "AFF_UPDATE",
+    0x5: "GRP_VCH_REQ",
+    0x6: "GRP_VCH_RLS",
+    0x7: "GRP_VCH_RSP",
+    0x8: "U_REG_REQ",
+    0x9: "U_REG_RSP",
+    0x10: "U_DE_REG_REQ",
+    0x11: "U_DE_REG_RSP",
+    0x12: "EMRG_ALRM_REQ",
+    0x13: "EMRG_ALRM_RSP",
+    0x14: "CALL_ALRT",
+    0x15: "CALL_ALRT_REQ"
 });
 
 const ResponseType = Object.freeze({
@@ -128,6 +148,17 @@ app.get('/reports', (req, res) => {
 
 app.get('/affiliations', (req, res) => {
     res.render('affiliations');
+});
+
+app.get('/map/:networkName', (req, res) => {
+    const networkName = req.params.networkName;
+    const network = config.networks.find(n => n.name === networkName);
+
+    if (!network) {
+        return res.status(404).send('Network not found');
+    }
+
+    res.render('map', { network });
 });
 
 server.listen(config.listenPort, config.bindAddress, () => {
