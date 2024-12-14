@@ -1,5 +1,7 @@
 # Disabled location broadcasts logging
 disableLocationBcast: true
+# Disable reports showing location broadcasts
+disableLocationBcastReports: true
 
 # Port to bind the server to
 listenPort: 3000

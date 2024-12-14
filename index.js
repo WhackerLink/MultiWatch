@@ -150,11 +150,11 @@ app.post('/', (req, res) => {
 });
 
 app.get('/reports', (req, res) => {
-    res.render('reports', { reports });
+    res.render('reports', { reports, networks: config.networks, hideLocBcast: config.disableLocationBcastReports });
 });
 
 app.get('/affiliations', (req, res) => {
-    res.render('affiliations');
+    res.render('affiliations', { networks: config.networks });
 });
 
 app.get('/map/:networkName', (req, res) => {
@@ -165,7 +165,7 @@ app.get('/map/:networkName', (req, res) => {
         return res.status(404).send('Network not found');
     }
 
-    res.render('map', { network });
+    res.render('map', { network, networks: config.networks });
 });
 
 server.listen(config.listenPort, config.bindAddress, () => {
