@@ -1,3 +1,6 @@
+# Disabled location broadcasts logging
+disableLocationBcast: true
+
 # Port to bind the server to
 listenPort: 3000
 # Address to bind the server to

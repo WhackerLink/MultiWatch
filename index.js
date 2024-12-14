@@ -138,8 +138,13 @@ app.post('/', (req, res) => {
     if (reports.length > 15) {
         reports.shift();
     }
+
     // console.log(reports);
-    console.log(`${PacketTypes[req.body.Type]}, srcId: ${req.body.SrcId}, dstId: ${req.body.DstId}, ResponseType: ${ResponseType[req.body.ResponseType]}`);
+
+    if (!config.disableLocationBcast || req.body.Type !== 0x19) { // 0x19 = loc bcast
+        console.log(`${PacketTypes[req.body.Type]}, srcId: ${req.body.SrcId}, dstId: ${req.body.DstId}, ResponseType: ${ResponseType[req.body.ResponseType]}`);
+    }
+
     io.emit("report", req.body);
     res.status(200).send();
 });
