@@ -30,6 +30,18 @@
             <li class="nav-item">
                 <a href="/reports" class="btn btn-primary mr-2">Reports</a>
             </li>
+            <li class="nav-item dropdown">
+                <a class="btn btn-primary dropdown-toggle mr-2" href="#" id="mapDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Maps
+                </a>
+                <div class="dropdown-menu" aria-labelledby="mapDropdown">
+                    <% networks.forEach(network => { %>
+                        <div class="dropdown-item">
+                            <a class="dropdown-item dropdown-toggle" href="/map/<%= network.name %>"><%= network.name %></a>
+                        </div>
+                    <% }) %>
+                </div>
+            </li>
             <li class="nav-item">
                 <button id="darkModeToggle" class="btn btn-outline-secondary">Dark Mode</button>
             </li>
