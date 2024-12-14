@@ -27,6 +27,8 @@
     <title>Map - <%= network.name %></title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin="">
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/styles.css" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
     <style>
         html, body {
@@ -37,8 +39,15 @@
         }
 
         #map {
-            height: 100%;
+            height: calc(100% - 56px);
             width: 100%;
+        }
+
+        #button-container {
+            position: absolute;
+            top: 70px;
+            left: 50px;
+            z-index: 1000;
         }
 
         .leaflet-popup-content-wrapper {
@@ -65,8 +74,10 @@
     </style>
 </head>
 <body>
-<button id="toggle-lines" style="position: absolute; top: 10px; left: 10px; z-index: 1000;">Show Lines</button>
-
+<%- include("partials/header") %>
+<div id="button-container">
+    <button id="toggle-lines" class="btn btn-primary">Show Lines</button>
+</div>
 <div id="map"></div>
 
 <script>
@@ -154,6 +165,9 @@
             popupAnchor: [0, -15]
         });
     }
+
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const body = document.body;
 
     const radioMarkers = new Map();
     const emergencyStatus = new Map();
@@ -254,6 +268,22 @@
             radioMarkers.set(siteKey, marker);
         });
     }
+
+    if (localStorage.getItem('darkMode') === 'enabled') {
+        body.classList.add('dark-mode');
+        darkModeToggle.textContent = 'Light Mode';
+    }
+
+    darkModeToggle.addEventListener('click', function() {
+        body.classList.toggle('dark-mode');
+        if (body.classList.contains('dark-mode')) {
+            localStorage.setItem('darkMode', 'enabled');
+            darkModeToggle.textContent = 'Light Mode';
+        } else {
+            localStorage.removeItem('darkMode');
+            darkModeToggle.textContent = 'Dark Mode';
+        }
+    });
 
     document.getElementById('toggle-lines').addEventListener('click', () => {
         showLines = !showLines;
