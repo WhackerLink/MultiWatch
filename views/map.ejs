@@ -44,6 +44,24 @@
         .leaflet-popup-content-wrapper {
             font-size: 14px;
         }
+
+        .emergency-icon {
+            background-color: red;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            animation: flash 1s infinite;
+            border: 2px solid white;
+        }
+
+        @keyframes flash {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.3;
+            }
+        }
     </style>
 </head>
 <body>
@@ -116,7 +134,17 @@
 
     const ExampleGroup = L.layerGroup().addTo(mymap);
 
-    function customIcon(icon) {
+    function customIcon(icon, isEmergency = false) {
+        if (isEmergency) {
+            return L.divIcon({
+                iconUrl: `/blips/${icon}.png`,
+                iconSize: [20, 20],
+                iconAnchor: [10, 10],
+                popupAnchor: [0, -15],
+                className: 'emergency-icon'
+            });
+        }
+
         return L.icon({
             iconUrl: `/blips/${icon}.png`,
             iconSize: [20, 20],
@@ -125,19 +153,66 @@
         });
     }
 
+    const radioMarkers = new Map();
+    const emergencyStatus = new Map();
+
     const socket = io();
 
     socket.on('report', (data) => {
-        console.log(data.Type);
-        if (data.Type === 0x12) { // 0x12 = emerg alarm req
-            L.marker([Number(data.Long), Number(data.Lat)], { icon: customIcon('1') })
+        if (data.Type === 0x12 || data.Type === 0x19) { // 0x12 = emerg req and 0x19 = loc bcast
+            const lat = Number(data.Long);
+            const lng = Number(data.Lat);
+            const srcId = data.SrcId;
+
+            if (data.Type === 0x12) {
+                emergencyStatus.set(srcId, true);
+            } else if (!emergencyStatus.has(srcId)) {
+                emergencyStatus.set(srcId, false);
+            }
+
+            if (radioMarkers.has(srcId)) {
+                const oldMarker = radioMarkers.get(srcId);
+                ExampleGroup.removeLayer(oldMarker);
+            }
+
+            const isEmergency = emergencyStatus.get(srcId);
+            const iconType = isEmergency ? '2' : '1';
+
+            const newMarker = L.marker([lat, lng], {icon: customIcon(iconType, isEmergency)})
                 .addTo(ExampleGroup)
                 .bindPopup(`
-                    Src ID: ${data.SrcId}<br>
-                    TGID ID: ${data.DstId}
+                    Src ID: ${srcId}<br>
+                    ${isEmergency ? '<strong>EMERGENCY ACTIVE</strong>' : ''}
+                    ${isEmergency ? `<button onclick="clearEmergency(${srcId})">Clear Emergency</button>` : ''}
                 `);
+            radioMarkers.set(srcId, newMarker);
         }
     });
+
+    window.clearEmergency = (srcId) => {
+        if (emergencyStatus.has(srcId.toString())) {
+            emergencyStatus.set(srcId.toString(), false);
+
+
+            const marker = radioMarkers.get(srcId.toString());
+            if (marker) {
+                const { lat, lng } = marker.getLatLng();
+
+                ExampleGroup.removeLayer(marker);
+
+                const newMarker = L.marker([lat, lng], { icon: customIcon('1') })
+                    .addTo(ExampleGroup)
+                    .bindPopup(`
+                    Src ID: ${srcId}<br>
+                `);
+
+                radioMarkers.set(srcId, newMarker);
+
+                newMarker.openPopup();
+            }
+        }
+    };
+
 </script>
 </body>
 </html>
