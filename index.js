@@ -69,7 +69,8 @@ const PacketTypes = Object.freeze({
     0x15: "CALL_ALRT_REQ",
     0x18: "REL_DEMAND",
     0x19: "LOC_BCAST",
-    0x20: "SITE_BCAST"
+    0x20: "SITE_BCAST",
+    0x21: "STS_BCAST"
 });
 
 const ResponseType = Object.freeze({
@@ -143,18 +144,22 @@ app.post('/', (req, res) => {
 
     // console.log(reports);
 
-    if ((!config.disableLocationBcast || req.body.Type !== 0x19) && req.body.Type !== 0x20) { // 0x19 = loc bcast; 0x20 = site bcast
+    if ((!config.disableLocationBcast || req.body.Type !== 0x19) && req.body.Type !== 0x20 && req.body.Type !== 0x21) { // 0x19 = loc bcast; 0x20 = site bcast
         console.log(`${PacketTypes[req.body.Type]}, srcId: ${req.body.SrcId}, dstId: ${req.body.DstId}, ResponseType: ${ResponseType[req.body.ResponseType]}`);
     }
 
-    if (req.body.Type !== 0x20) {
-        io.emit("report", req.body);
-    } else if (req.body.Type === 0x20) { // 0x20 = site bcast
+    if (req.body.Type === 0x20) { // 0x20 = site bcast
         if (!config.disableSiteBcast) {
             console.log(`${PacketTypes[req.body.Type]}, Site Count: ${req.body.Sites.length}`);
         }
 
         sites = req.body.Sites;
+    } else if (req.body.Type === 0x21) { // 0x21 = sts bcast
+        io.emit("sts_bcast", req.body.Extra);
+        const [siteName, frequency, status] = req.body.split(",").map(item => item.trim());
+        console.log("Site: " + siteName + " is " + status)
+    } else {
+        io.emit("report", req.body);
     }
 
     res.status(200).send();

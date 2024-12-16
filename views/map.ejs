@@ -235,6 +235,49 @@
         }
     });
 
+    socket.on("sts_bcast", (data) => {
+        const [siteName, frequency, status] = data.split(",").map(item => item.trim());
+
+        let siteMarker = null;
+        radioMarkers.forEach((marker, key) => {
+            if (key.includes(siteName)) {
+                siteMarker = marker;
+            }
+        });
+
+        if (siteMarker) {
+            ExampleGroup.removeLayer(siteMarker);
+            radioMarkers.delete(siteName);
+        }
+
+        let iconUrl = '/blips/3.png';
+
+        if (status === "DOWN") {
+            iconUrl = '/blips/4.png';
+        } else if (status === "FAILSOFT") {
+            iconUrl = '/blips/5.png';
+        }
+
+        const latLng = siteMarker ? siteMarker.getLatLng() : { lat: 0, lng: 0 };
+
+        const newMarker = L.marker([latLng.lat, latLng.lng], {
+            icon: L.icon({
+                iconUrl,
+                iconSize: [60, 60],
+                iconAnchor: [30, 30],
+                popupAnchor: [0, -15]
+            })
+        }).addTo(ExampleGroup);
+
+        newMarker.bindPopup(`
+            <strong>${siteName}</strong><br>
+            CC: ${frequency} MHz<br>
+            Status: ${status}<br>
+        `);
+
+        radioMarkers.set(siteName, newMarker);
+    });
+
     function plotSites(sites) {
         console.log(sites);
         if (sites === undefined || sites === null || sites.length === 0) {

@@ -3,7 +3,7 @@ disableLocationBcast: true
 # Disable reports showing location broadcasts
 disableLocationBcastReports: true
 # Disable site broadcast logging and reports
-disableSiteBcast: true
+disableSiteBcast: false
 
 # Port to bind the server to
 listenPort: 3000
