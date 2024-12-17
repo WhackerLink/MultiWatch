@@ -83,7 +83,7 @@ const ResponseType = Object.freeze({
 });
 
 let reports = [];
-let sites = [];
+let sites = new Map();
 
 async function fetchVoiceChannelData() {
     try {
@@ -150,14 +150,37 @@ app.post('/', (req, res) => {
 
     if (req.body.Type === 0x20) { // 0x20 = site bcast
         if (!config.disableSiteBcast) {
-            console.log(`${PacketTypes[req.body.Type]}, Site Count: ${req.body.Sites.length}`);
+            console.log(`Site Broadcast: Site Count: ${req.body.Sites.length}`);
         }
 
-        sites = req.body.Sites;
+        req.body.Sites.forEach((site) => {
+            const siteKey = `site-${site.SiteID}`;
+
+            const existingSite = sites.get(siteKey);
+            const updatedSite = {
+                ...site,
+                Status: existingSite ? existingSite.Status : "UP",
+            };
+
+            sites.set(siteKey, updatedSite);
+        });
+
+        io.emit("site_update", Array.from(sites.values()));
+        io.emit("site_update", Array.from(sites.values()));
     } else if (req.body.Type === 0x21) { // 0x21 = sts bcast
-        io.emit("sts_bcast", req.body.Extra);
-        const [siteName, frequency, status] = req.body.split(",").map(item => item.trim());
-        console.log("Site: " + siteName + " is " + status)
+        const site = req.body.Site;
+        const status = req.body.Status;
+
+        const siteKey = `site-${site.SiteID}`;
+        if (sites.has(siteKey)) {
+            const existingSite = sites.get(siteKey);
+            sites.set(siteKey, { ...existingSite, Status: status });
+        } else {
+            sites.set(siteKey, { ...site, Status: status });
+        }
+
+        console.log(`Status Update: ${site.Name} is ${status === 0 ? "DOWN" : status === 1 ? "UP" : "FAILSOFT"}`);
+        io.emit("site_update", Array.from(sites.values()));
     } else {
         io.emit("report", req.body);
     }
@@ -181,7 +204,7 @@ app.get('/map/:networkName', (req, res) => {
         return res.status(404).send('Network not found');
     }
 
-    res.render('map', { network, networks: config.networks, sites });
+    res.render('map', { network, networks: config.networks, sites: Array.from(sites.values()) });
 });
 
 server.listen(config.listenPort, config.bindAddress, () => {

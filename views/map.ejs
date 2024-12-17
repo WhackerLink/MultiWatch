@@ -235,47 +235,47 @@
         }
     });
 
-    socket.on("sts_bcast", (data) => {
-        const [siteName, frequency, status] = data.split(",").map(item => item.trim());
+    socket.on("site_update", (updatedSites) => {
+        console.log("Site updates received:", updatedSites);
 
-        let siteMarker = null;
-        radioMarkers.forEach((marker, key) => {
-            if (key.includes(siteName)) {
-                siteMarker = marker;
+        updatedSites.forEach(site => {
+            const lat = parseFloat(site.Location.Y);
+            const lng = parseFloat(site.Location.X);
+            const siteKey = `site-${site.SiteID}`;
+
+            if (radioMarkers.has(siteKey)) {
+                const oldMarker = radioMarkers.get(siteKey);
+                ExampleGroup.removeLayer(oldMarker);
+                radioMarkers.delete(siteKey);
             }
-        });
 
-        if (siteMarker) {
-            ExampleGroup.removeLayer(siteMarker);
-            radioMarkers.delete(siteName);
-        }
+            let iconUrl = '/blips/3.png'; // UP
+            if (site.Status === 0) {
+                iconUrl = '/blips/4.png'; // DOWN
+            } else if (site.Status === 2) {
+                iconUrl = '/blips/5.png'; // FAILSOFT
+            }
 
-        let iconUrl = '/blips/3.png';
+            const newMarker = L.marker([lat, lng], {
+                icon: L.icon({
+                    iconUrl,
+                    iconSize: [60, 60],
+                    iconAnchor: [30, 30],
+                    popupAnchor: [0, -15]
+                })
+            }).addTo(ExampleGroup);
 
-        if (status === "DOWN") {
-            iconUrl = '/blips/4.png';
-        } else if (status === "FAILSOFT") {
-            iconUrl = '/blips/5.png';
-        }
-
-        const latLng = siteMarker ? siteMarker.getLatLng() : { lat: 0, lng: 0 };
-
-        const newMarker = L.marker([latLng.lat, latLng.lng], {
-            icon: L.icon({
-                iconUrl,
-                iconSize: [60, 60],
-                iconAnchor: [30, 30],
-                popupAnchor: [0, -15]
-            })
-        }).addTo(ExampleGroup);
-
-        newMarker.bindPopup(`
-            <strong>${siteName}</strong><br>
-            CC: ${frequency} MHz<br>
-            Status: ${status}<br>
+            newMarker.bindPopup(`
+            <strong>${site.Name}</strong><br>
+            Control Channel: ${site.ControlChannel}<br>
+            Voice Channels: ${site.VoiceChannels.join(', ')}<br>
+            Location: (${lat}, ${lng})<br>
+            Site ID: ${site.SiteID}<br>
+            Status: ${site.Status === 0 ? "DOWN" : site.Status === 2 ? "FAILSOFT" : "UP"}
         `);
 
-        radioMarkers.set(siteName, newMarker);
+            radioMarkers.set(siteKey, newMarker);
+        });
     });
 
     function plotSites(sites) {
