@@ -135,57 +135,63 @@ app.get('/', (req, res) => {
     res.render('index', { networks: config.networks });
 });
 
-app.post('/', (req, res) => {
-    // console.log(req.body);
-    reports.push(req.body);
-    if (reports.length > 15) {
-        reports.shift();
-    }
+config.networks.forEach((network) => {
+    const networkApp = express();
+    const networkServer = http.createServer(networkApp);
 
-    // console.log(reports);
+    networkApp.use(express.json());
 
-    if ((!config.disableLocationBcast || req.body.Type !== 0x19) && req.body.Type !== 0x20 && req.body.Type !== 0x21) { // 0x19 = loc bcast; 0x20 = site bcast
-        console.log(`${PacketTypes[req.body.Type]}, srcId: ${req.body.SrcId}, dstId: ${req.body.DstId}, ResponseType: ${ResponseType[req.body.ResponseType]}`);
-    }
+    networkApp.post('/', (req, res) => {
+        reports.push(req.body);
+        if (reports.length > 15) reports.shift();
 
-    if (req.body.Type === 0x20) { // 0x20 = site bcast
-        if (!config.disableSiteBcast) {
-            console.log(`Site Broadcast: Site Count: ${req.body.Sites.length}`);
+        if ((!config.disableLocationBcast || req.body.Type !== 0x19) && req.body.Type !== 0x20 && req.body.Type !== 0x21) {
+            console.log(`${PacketTypes[req.body.Type]}, srcId: ${req.body.SrcId}, dstId: ${req.body.DstId}, ResponseType: ${ResponseType[req.body.ResponseType]}`);
         }
 
-        req.body.Sites.forEach((site) => {
+        if (req.body.Type === 0x20) { // 0x20 = site bcast
+            if (!config.disableSiteBcast) {
+                console.log(`Site Broadcast: Site Count: ${req.body.Sites.length}`);
+            }
+
+            req.body.Sites.forEach((site) => {
+                const siteKey = `site-${site.SiteID}`;
+
+                const existingSite = sites.get(siteKey);
+                const updatedSite = {
+                    ...site,
+                    Status: existingSite ? existingSite.Status : "UP",
+                };
+
+                sites.set(siteKey, updatedSite);
+            });
+
+            io.emit("site_update", Array.from(sites.values()));
+            io.emit("site_update", Array.from(sites.values()));
+        } else if (req.body.Type === 0x21) { // 0x21 = sts bcast
+            const site = req.body.Site;
+            const status = req.body.Status;
+
             const siteKey = `site-${site.SiteID}`;
+            if (sites.has(siteKey)) {
+                const existingSite = sites.get(siteKey);
+                sites.set(siteKey, { ...existingSite, Status: status });
+            } else {
+                sites.set(siteKey, { ...site, Status: status });
+            }
 
-            const existingSite = sites.get(siteKey);
-            const updatedSite = {
-                ...site,
-                Status: existingSite ? existingSite.Status : "UP",
-            };
-
-            sites.set(siteKey, updatedSite);
-        });
-
-        io.emit("site_update", Array.from(sites.values()));
-        io.emit("site_update", Array.from(sites.values()));
-    } else if (req.body.Type === 0x21) { // 0x21 = sts bcast
-        const site = req.body.Site;
-        const status = req.body.Status;
-
-        const siteKey = `site-${site.SiteID}`;
-        if (sites.has(siteKey)) {
-            const existingSite = sites.get(siteKey);
-            sites.set(siteKey, { ...existingSite, Status: status });
+            console.log(`Status Update: ${site.Name} is ${status === 0 ? "DOWN" : status === 1 ? "UP" : "FAILSOFT"}`);
+            io.emit("site_update", Array.from(sites.values()));
         } else {
-            sites.set(siteKey, { ...site, Status: status });
+            io.emit("report", req.body);
         }
 
-        console.log(`Status Update: ${site.Name} is ${status === 0 ? "DOWN" : status === 1 ? "UP" : "FAILSOFT"}`);
-        io.emit("site_update", Array.from(sites.values()));
-    } else {
-        io.emit("report", req.body);
-    }
+        res.status(200).send();
+    });
 
-    res.status(200).send();
+    networkServer.listen(network.listenPort, network.bindAddress, () => {
+        console.log(`Network listener for ${network.name} started on http://${network.bindAddress}:${network.listenPort}`);
+    });
 });
 
 app.get('/reports', (req, res) => {

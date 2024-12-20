@@ -6,7 +6,7 @@ disableLocationBcastReports: true
 disableSiteBcast: false
 
 # Port to bind the server to
-listenPort: 3000
+listenPort: 3001
 # Address to bind the server to
 bindAddress: 127.0.0.1
 
@@ -14,5 +14,18 @@ bindAddress: 127.0.0.1
 networks:
     # Textual alias for the network
   - name: "Dev Master 1"
-    # URL to connect to
+    # URL to connect to (REST)
     url: "http://127.0.0.1:3002"
+    # Port to listen for reports
+    listenPort: 3000
+    # Address to listen for reports
+    bindAddress: 127.0.0.1
+
+  # Textual alias for the network
+  - name: "Example Master 2"
+    # URL to connect to (REST)
+    url: "http://127.0.0.1:3003"
+    # Port to listen for reports
+    listenPort: 3004
+    # Address to listen for reports
+    bindAddress: 127.0.0.1
