@@ -142,10 +142,9 @@ config.networks.forEach((network) => {
     networkApp.use(express.json());
 
     networkApp.post('/', (req, res) => {
-        reports.push(req.body);
-        if (reports.length > 15) reports.shift();
-
         if ((!config.disableLocationBcast || req.body.Type !== 0x19) && req.body.Type !== 0x20 && req.body.Type !== 0x21) {
+            reports.push(req.body);
+            if (reports.length > 15) reports.shift();
             console.log(`${PacketTypes[req.body.Type]}, srcId: ${req.body.SrcId}, dstId: ${req.body.DstId}, ResponseType: ${ResponseType[req.body.ResponseType]}`);
         }
 
