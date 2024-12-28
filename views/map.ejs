@@ -180,6 +180,10 @@
     plotSites(JSON.parse('<%- JSON.stringify(sites) %>'));
 
     socket.on('report', (data) => {
+        if (data.networkName !== '<%= network.name %>') {
+            return; // Ignore updates for other networks (duh....)
+        }
+
         if (data.Type === 0x12 || data.Type === 0x19) { // 0x12 = emerg req, 0x19 = loc bcast
             console.log('Report data:', data);
 
@@ -237,6 +241,10 @@
 
     socket.on("site_update", (updatedSites) => {
         console.log("Site updates received:", updatedSites);
+
+        if (updatedSites.networkName !== '<%= network.name %>') {
+            return; // Ignore updates for other networks (duh....)
+        }
 
         updatedSites.forEach(site => {
             const lat = parseFloat(site.Location.Y);

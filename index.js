@@ -142,6 +142,8 @@ config.networks.forEach((network) => {
     networkApp.use(express.json());
 
     networkApp.post('/', (req, res) => {
+        // console.log(req.body);
+
         if ((!config.disableLocationBcast || req.body.Type !== 0x19) && req.body.Type !== 0x20 && req.body.Type !== 0x21) {
             reports.push(req.body);
             if (reports.length > 15) reports.shift();
@@ -165,7 +167,8 @@ config.networks.forEach((network) => {
                 sites.set(siteKey, updatedSite);
             });
 
-            io.emit("site_update", Array.from(sites.values()));
+            sites.networkName = network.name;
+
             io.emit("site_update", Array.from(sites.values()));
         } else if (req.body.Type === 0x21) { // 0x21 = sts bcast
             const site = req.body.Site;
@@ -180,8 +183,13 @@ config.networks.forEach((network) => {
             }
 
             console.log(`Status Update: ${site.Name} is ${status === 0 ? "DOWN" : status === 1 ? "UP" : "FAILSOFT"}`);
+
+            sites.networkName = network.name;
+
             io.emit("site_update", Array.from(sites.values()));
         } else {
+            req.body.networkName = network.name;
+
             io.emit("report", req.body);
         }
 
@@ -204,6 +212,8 @@ app.get('/affiliations', (req, res) => {
 app.get('/map/:networkName', (req, res) => {
     const networkName = req.params.networkName;
     const network = config.networks.find(n => n.name === networkName);
+
+    sites.networkName = req.params.networkName;
 
     if (!network) {
         return res.status(404).send('Network not found');
