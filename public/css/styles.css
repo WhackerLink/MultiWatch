@@ -1,6 +1,7 @@
 body {
     background-color: #f8f9fa;
     color: #212529;
+    font-family: 'Roboto', sans-serif;
     transition: background-color 0.3s, color 0.3s;
 }
 
@@ -11,6 +12,18 @@ body.dark-mode {
 
 .container {
     padding: 20px;
+}
+
+.btn-dark-mode-toggle {
+    background-color: #6c757d;
+    color: #ffffff;
+    border: none;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+body.dark-mode .btn-dark-mode-toggle {
+    background-color: #495057;
+    color: #f8f9fa;
 }
 
 .network-container, .card {
@@ -25,6 +38,27 @@ body.dark-mode {
 body.dark-mode .network-container, body.dark-mode .card {
     background-color: #343a40;
     border-color: #495057;
+}
+
+.nav-tabs .nav-link {
+    color: #6c757d;
+    background-color: #e9ecef;
+    border: 1px solid #dee2e6;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.nav-tabs .nav-link.active {
+    color: #ffffff;
+    background-color: #007bff;
+}
+
+body.dark-mode .nav-tabs .nav-link {
+    color: #ccc;
+    background-color: #343a40;
+}
+
+body.dark-mode .nav-tabs .nav-link.active {
+    background-color: #495057;
 }
 
 .site-box, .control-channels-container, .repeater-box, .card-header {
@@ -63,6 +97,32 @@ body.dark-mode .voice-channel {
 body.dark-mode .voice-channel.keyed {
     background-color: #28a745;
     border-color: #218838;
+}
+
+.tab-pane {
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    background-color: #ffffff;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+body.dark-mode .tab-pane {
+    background-color: #343a40;
+    border-color: #495057;
+}
+
+.voice-channels {
+    margin-top: 10px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.voice-channel:hover {
+    background-color: #f5c2c7;
+}
+
+body.dark-mode .voice-channel:hover {
+    background-color: #a71d2a;
 }
 
 h2, h3, h5 {
@@ -120,4 +180,33 @@ body.dark-mode .form-control {
     background-color: #495057;
     color: #f8f9fa;
     border: 1px solid #6c757d;
+}
+
+.site-card {
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.site-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .site-card {
+    background-color: #343a40;
+    border-color: #495057;
+    color: #f8f9fa;
+}
+
+@media (max-width: 768px) {
+    .site-card {
+        font-size: 0.85rem;
+    }
+
+    .voice-channel {
+        font-size: 0.75rem;
+    }
 }

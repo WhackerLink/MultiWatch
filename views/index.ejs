@@ -1,50 +1,40 @@
-<!--
-  WhackerLink - Multi Watch
-
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program. If not, see <http://www.gnu.org/licenses/>.
-
-  Copyright (C) 2023-2024 Caleb, K4PHP
--->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi Watch</title>
+    <title>MultiWatch</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
     <link href="/css/styles.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js" crossorigin="anonymous"></script>
 </head>
 <body>
 <%- include("partials/header") %>
-<div class="container mt-4">
-    <div class="row" id="network-container"></div>
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div id="networkTabs" class="d-flex flex-wrap"></div>
+    </div>
+    <div id="networkTabContent"></div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const socket = io();
-        const darkModeToggle = document.getElementById('darkModeToggle');
+        const tabsContainer = document.getElementById('networkTabs');
+        const tabContentContainer = document.getElementById('networkTabContent');
         const body = document.body;
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        let currentActiveTab = 0;
 
         if (localStorage.getItem('darkMode') === 'enabled') {
             body.classList.add('dark-mode');
             darkModeToggle.textContent = 'Light Mode';
+        } else {
+            darkModeToggle.textContent = 'Dark Mode';
         }
 
-        darkModeToggle.addEventListener('click', function() {
+        darkModeToggle.addEventListener('click', function () {
             body.classList.toggle('dark-mode');
             if (body.classList.contains('dark-mode')) {
                 localStorage.setItem('darkMode', 'enabled');
@@ -55,59 +45,98 @@
             }
         });
 
-        socket.on('networkUpdate', function(networks) {
-            renderNetworks(networks);
+        socket.on('networkUpdate', function (networks) {
+            console.log('Received network update:', networks);
+            renderTabs(networks);
         });
 
-        function renderNetworks(networks) {
-            const container = document.getElementById('network-container');
-            container.innerHTML = '';
-            console.log(networks)
-            networks.forEach(network => {
-                const networkBox = document.createElement('div');
-                networkBox.className = 'col-md-4';
-                networkBox.innerHTML = `
-                    <div class="network-box mb-4">
-                        <h2>${network.name}</h2>
-                        <div class="sites-container"></div>
+        function renderTabs(networks) {
+            tabsContainer.innerHTML = '';
+            tabContentContainer.innerHTML = '';
+
+            networks.forEach((network, index) => {
+                const tabButton = document.createElement('button');
+                tabButton.className = `btn btn-sm ${index === currentActiveTab ? 'btn-primary' : 'btn-outline-primary'} me-2`;
+                tabButton.textContent = network.name;
+                tabButton.dataset.networkIndex = index;
+
+                tabButton.addEventListener('click', () => {
+                    setActiveTab(index);
+                });
+
+                tabsContainer.appendChild(tabButton);
+
+                const tabContent = document.createElement('div');
+                tabContent.className = `tab-content ${index === currentActiveTab ? 'd-block' : 'd-none'}`;
+                tabContent.id = `network-${index}`;
+                tabContent.innerHTML = renderNetworkContent(network);
+
+                tabContentContainer.appendChild(tabContent);
+            });
+        }
+
+        function setActiveTab(index) {
+            currentActiveTab = index;
+
+            document.querySelectorAll('#networkTabs button').forEach((btn, btnIndex) => {
+                btn.classList.toggle('btn-primary', btnIndex === index);
+                btn.classList.toggle('btn-outline-primary', btnIndex !== index);
+            });
+
+            document.querySelectorAll('#networkTabContent .tab-content').forEach((content, contentIndex) => {
+                content.classList.toggle('d-block', contentIndex === index);
+                content.classList.toggle('d-none', contentIndex !== index);
+            });
+        }
+
+        function renderNetworkContent(network) {
+            if (!network.data || !network.data.sites || network.data.sites.length === 0) {
+                return `
+                    <div class="alert alert-warning text-center">
+                        <strong>No site data available for ${network.name}.</strong>
                     </div>
                 `;
+            }
 
-                const sitesContainer = networkBox.querySelector('.sites-container');
+            return `
+                <div class="row g-3">
+                    ${network.data.sites.map(site => `
+                        <div class="col-lg-3 col-md-4 col-sm-6">
+                            <div class="site-card bg-secondary text-light rounded p-2 shadow-sm">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="text-center fw-bold mb-0">${site.name || 'Unnamed Site'}</h6>
+                                    <span class="badge ${site.status === 'online' ? 'bg-success' : 'bg-success'}"> <!-- temportary -->
+                                        ${site.status === 'online' ? 'Online' : 'Online'}
+                                    </span>
+                                </div>
+                                <p class="text-center"><strong>Control:</strong> ${site.controlChannel || 'Unknown'}</p>
+                                <div class="voice-channels mt-2">
+                                    ${renderVoiceChannels(network.data.activeVoiceChannels, site.siteID)}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
 
-                if (network.status === 'failed') {
-                    sitesContainer.innerHTML = `<p>Connection Failed</p>`;
-                } else {
-                    network.data.sites.forEach(site => {
-                        const siteDiv = document.createElement('div');
-                        siteDiv.className = 'site-box';
-                        siteDiv.innerHTML = `
-                            <h3>${site.name}</h3>
-                            <p>Control Channel: ${site.controlChannel}</p>
-                            <div class="voice-channels-list"></div>
-                        `;
-                        sitesContainer.appendChild(siteDiv);
+        function renderVoiceChannels(voiceChannels, siteID) {
+            if (!voiceChannels || voiceChannels.length === 0) {
+                return '<p class="text-center text-warning">No active channels</p>';
+            }
 
-                        const voiceChannelsList = siteDiv.querySelector('.voice-channels-list');
-                        network.data.activeVoiceChannels.forEach(voiceChannel => {
-                            if (voiceChannel.site.siteID === site.siteID) {
-                                const voiceChannelDiv = document.createElement('div');
-                                voiceChannelDiv.className = 'card mb-2';
-                                voiceChannelDiv.innerHTML = `
-                                    <div class="card-body">
-                                        <h5 class="card-title">Voice Channel: ${voiceChannel.frequency}</h5>
-                                        <p class="card-text">Dst ID: ${voiceChannel.dstId}</p>
-                                        <p class="card-text">Src ID: ${voiceChannel.srcId}</p>
-                                    </div>
-                                `;
-                                voiceChannelsList.appendChild(voiceChannelDiv);
-                            }
-                        });
-                    });
-                }
+            const filteredChannels = voiceChannels.filter(vc => vc.site.siteID === siteID);
+            if (filteredChannels.length === 0) {
+                return '<p class="text-center text-warning">No active channels for this site</p>';
+            }
 
-                container.appendChild(networkBox);
-            });
+            return filteredChannels.map(vc => `
+                <div class="voice-channel p-2 rounded bg-light text-dark mb-2">
+                    <div><strong>Freq:</strong> ${vc.frequency || 'Unknown'} MHz</div>
+                    <div><strong>Dst:</strong> ${vc.dstId || 'N/A'}</div>
+                    <div><strong>Src:</strong> ${vc.srcId || 'N/A'}</div>
+                </div>
+            `).join('');
         }
     });
 </script>
