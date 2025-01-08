@@ -105,6 +105,48 @@ async function fetchVoiceChannelData() {
     }
 }
 
+async function sendInhibit(dstId, networkName) {
+    try {
+        const network = config.networks.find((net) => net.name === networkName);
+
+        if (!network) {
+            console.error(`Network with name ${networkName} not found.`);
+            return;
+        }
+
+        try {
+            const response = await axios.post(`${network.url}/api/command/inhibit`, { DstId: dstId });
+            io.emit('networkUpdate', { network: network.name, success: response.data.success });
+        } catch (error) {
+            console.error(`Error sending inhibit to network ${network.name}:`, error);
+            io.emit('networkUpdate', { network: network.name, success: false });
+        }
+    } catch (error) {
+        console.error('Error processing inhibit command:', error);
+    }
+}
+
+async function sendUninhibit(dstId, networkName) {
+    try {
+        const network = config.networks.find((net) => net.name === networkName);
+
+        if (!network) {
+            console.error(`Network with name ${networkName} not found.`);
+            return;
+        }
+
+        try {
+            const response = await axios.post(`${network.url}/api/command/uninhibit`, { DstId: dstId });
+            io.emit('networkUpdate', { network: network.name, success: response.data.success });
+        } catch (error) {
+            console.error(`Error sending uninhibit to network ${network.name}:`, error);
+            io.emit('networkUpdate', { network: network.name, success: false });
+        }
+    } catch (error) {
+        console.error('Error processing uninhibit command:', error);
+    }
+}
+
 async function fetchAffiliationsData() {
     try {
         const networkDataPromises = config.networks.map(async (network) => {
@@ -198,6 +240,8 @@ config.networks.forEach((network) => {
 
     networkServer.listen(network.listenPort, network.bindAddress, () => {
         console.log(`Network listener for ${network.name} started on http://${network.bindAddress}:${network.listenPort}`);
+        // sendInhibit("1234", "Dev Master 1").then(r => {console.log(r)});
+        // sendUninhibit("1234", "Dev Master 1").then(r => {console.log(r)});
     });
 });
 
