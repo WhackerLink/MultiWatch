@@ -91,7 +91,7 @@
                             row.innerHTML = `
                                 <td>${affiliation.srcId}</td>
                                 <td>${affiliation.dstId}</td>
-                                <td>${affiliation.site.name}</td>
+                                <td>${affiliation.site && affiliation.site.name ? affiliation.site.name : 'UNKNOWN'}</td>
                             `;
                             tableBody.appendChild(row);
                         });
