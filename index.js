@@ -1,21 +1,22 @@
 /*
- * WhackerLink - Multi Watch
+ * Copyright (C) 2024-2025 Caleb H. (K4PHP) caleb.k4php@gmail.com
+ *
+ * This file is part of the WhackerLink MultiWatch project.
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
+ * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  *
- * Copyright (C) 2023-2025 Caleb, K4PHP
- *
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  */
 
 import express from 'express';
@@ -52,8 +53,37 @@ app.set('view engine','ejs');
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
-const PacketTypes  = Object.freeze({ /* ... same as before ... */ });
-const ResponseType = Object.freeze({ /* ... same as before ... */ });
+const PacketTypes = Object.freeze({
+    0x0: "UNKOWN",
+    0x1: "AUDIO_DATA",
+    0x2: "GRP_AFF_REQ",
+    0x3: "GRP_AFF_RSP",
+    0x4: "AFF_UPDATE",
+    0x5: "GRP_VCH_REQ",
+    0x6: "GRP_VCH_RLS",
+    0x7: "GRP_VCH_RSP",
+    0x8: "U_REG_REQ",
+    0x9: "U_REG_RSP",
+    0x10: "U_DE_REG_REQ",
+    0x11: "U_DE_REG_RSP",
+    0x12: "EMRG_ALRM_REQ",
+    0x13: "EMRG_ALRM_RSP",
+    0x14: "CALL_ALRT",
+    0x15: "CALL_ALRT_REQ",
+    0x18: "REL_DEMAND",
+    0x19: "LOC_BCAST",
+    0x20: "SITE_BCAST",
+    0x21: "STS_BCAST"
+});
+
+const ResponseType = Object.freeze({
+    1: "GRANT",
+    2: "REJECT",
+    3: "DENY",
+    4: "REFUSE",
+    5: "FAIL",
+    0xFF: "N/A"
+});
 
 let reports = [];
 let sites   = new Map();
