@@ -1,49 +1,70 @@
 <!--
-  WhackerLink - Multi Watch
+  Copyright (C) 2023-2025 Caleb H. (K4PHP) caleb.k4php@gmail.com
+
+  This file is part of the WhackerLink MultiWatch project.
 
   This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
+  it under the terms of the GNU Affero General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  GNU General Public License for more details.
+  GNU Affero General Public License for more details.
 
-  You should have received a copy of the GNU General Public License
-  along with this program. If not, see <http://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU Affero General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-  Copyright (C) 2023-2024 Caleb, K4PHP
+  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 -->
 
-<nav class="navbar navbar-expand-lg navbar-light">
+<nav class="navbar navbar-expand-lg navbar-light bg-light px-3">
     <a class="navbar-brand" href="/">Multi Watch</a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+    <button
+            class="navbar-toggler"
+            type="button"
+            data-toggle="collapse"
+            data-target="#navbarNav"
+            aria-controls="navbarNav"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+    >
         <span class="navbar-toggler-icon"></span>
     </button>
+
     <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ml-auto">
-            <li class="nav-item">
-                <a href="/affiliations" class="btn btn-primary mr-2">Affiliations</a>
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item me-2">
+                <a href="/affiliations" class="btn btn-primary">Affiliations</a>
             </li>
-            <li class="nav-item">
-                <a href="/reports" class="btn btn-primary mr-2">Reports</a>
+            <li class="nav-item me-2">
+                <a href="/reports" class="btn btn-primary">Reports</a>
             </li>
-            <li class="nav-item dropdown">
-                <a class="btn btn-primary dropdown-toggle mr-2" href="#" id="mapDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <li class="nav-item dropdown me-2">
+                <a
+                        class="btn btn-primary dropdown-toggle"
+                        href="#"
+                        id="mapDropdown"
+                        role="button"
+                        data-toggle="dropdown"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                >
                     Maps
                 </a>
                 <div class="dropdown-menu" aria-labelledby="mapDropdown">
                     <% networks.forEach(network => { %>
-                        <div class="dropdown-item">
-                            <a class="dropdown-item dropdown-toggle" href="/map/<%= network.name %>"><%= network.name %></a>
-                        </div>
+                        <a class="dropdown-item" href="/map/<%= encodeURIComponent(network.name) %>">
+                            <%= network.name %>
+                        </a>
                     <% }) %>
                 </div>
             </li>
             <li class="nav-item">
-                <button id="darkModeToggle" class="btn btn-outline-secondary">Dark Mode</button>
+                <button id="darkModeToggle" class="btn btn-outline-secondary">
+                    <span id="toggleLabel">Dark Mode</span>
+                </button>
             </li>
         </ul>
     </div>

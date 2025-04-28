@@ -1,20 +1,22 @@
 <!--
-  WhackerLink - Multi Watch
+  Copyright (C) 2023-2025 Caleb H. (K4PHP) caleb.k4php@gmail.com
+
+  This file is part of the WhackerLink MultiWatch project.
 
   This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
+  it under the terms of the GNU Affero General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
 
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  GNU General Public License for more details.
+  GNU Affero General Public License for more details.
 
-  You should have received a copy of the GNU General Public License
-  along with this program. If not, see <http://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU Affero General Public License
+  along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-  Copyright (C) 2023-2024 Caleb, K4PHP
+  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 
   Derived from: https://github.com/RiceaRaul/gta-v-map-leaflet
 -->
@@ -27,7 +29,10 @@
     <title>Map - <%= network.name %></title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin="">
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js" crossorigin="anonymous"></script>
     <link href="/css/styles.css" rel="stylesheet">
     <script src="/socket.io/socket.io.js"></script>
     <style>
@@ -71,10 +76,38 @@
                 opacity: 0.3;
             }
         }
+
+        body.dark-mode .navbar,
+        body.dark-mode #sidebar {
+            background-color: #1f1f1f !important;
+        }
+        body.dark-mode .nav-pills .nav-link {
+            color: #ccc;
+        }
+        body.dark-mode .nav-pills .nav-link.active {
+            background-color: #333 !important;
+        }
     </style>
 </head>
 <body>
-<%- include("partials/header") %>
+<%- include("partials/header", { networks: networks }) %>
+
+<script
+        src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"
+></script>
+<script
+        src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"
+></script>
+<script
+        src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"
+></script>
+
 <div id="button-container">
     <button id="toggle-lines" class="btn btn-primary">Show Lines</button>
 </div>
@@ -167,6 +200,8 @@
     }
 
     const darkModeToggle = document.getElementById('darkModeToggle');
+    const toggleLabel    = document.getElementById('toggleLabel');
+
     const body = document.body;
 
     const radioMarkers = new Map();
@@ -322,19 +357,15 @@
 
     if (localStorage.getItem('darkMode') === 'enabled') {
         body.classList.add('dark-mode');
-        darkModeToggle.textContent = 'Light Mode';
+        toggleLabel.textContent = 'Light Mode';
     }
 
     darkModeToggle.addEventListener('click', function() {
-        body.classList.toggle('dark-mode');
-        if (body.classList.contains('dark-mode')) {
-            localStorage.setItem('darkMode', 'enabled');
-            darkModeToggle.textContent = 'Light Mode';
-        } else {
-            localStorage.removeItem('darkMode');
-            darkModeToggle.textContent = 'Dark Mode';
-        }
+        const enabled = body.classList.toggle('dark-mode');
+        toggleLabel.textContent = enabled ? 'Light Mode' : 'Dark Mode';
+        localStorage.setItem('darkMode', enabled ? 'enabled' : 'disabled');
     });
+
 
     document.getElementById('toggle-lines').addEventListener('click', () => {
         showLines = !showLines;
