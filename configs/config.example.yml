@@ -10,22 +10,28 @@ listenPort: 3001
 # Address to bind the server to
 bindAddress: 127.0.0.1
 
+restServers:
+    # Textual alias for the REST server (internal use)
+  - name: "Dev Server 1"
+    # URL to connect to (REST)
+    url: "http://127.0.0.1:3002"
+
 # List of networks to connect to
 networks:
     # Textual alias for the network
-  - name: "Dev Master 1"
-    # URL to connect to (REST)
-    url: "http://127.0.0.1:3002"
+  - name: "Dev Master"
+    # Internal name of the REST server for this Master
+    restServer: "Dev Server 1"
     # Port to listen for reports
-    listenPort: 3000
+    listenPort: 3005
     # Address to listen for reports
     bindAddress: 127.0.0.1
 
-  # Textual alias for the network
+    # Textual alias for the network
   - name: "Example Master 2"
-    # URL to connect to (REST)
-    url: "http://127.0.0.1:3003"
+    # Internal name of the REST server for this Master
+    restServer: "Dev Server 1"
     # Port to listen for reports
-    listenPort: 3004
+    listenPort: 3006
     # Address to listen for reports
     bindAddress: 127.0.0.1
