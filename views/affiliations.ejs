@@ -157,16 +157,17 @@
                                 const pageBtn = row.querySelector('.page-btn');
 
                                 const dstId = affiliation.dstId;
+                                const srcId = affiliation.srcId;
                                 const networkName = network.name;
 
                                 inhibitBtn.addEventListener('click', () => {
-                                    socket.emit('inhibit', { dstId, network: networkName });
+                                    socket.emit('inhibit', { srcId, network: networkName });
                                 });
                                 uninhibitBtn.addEventListener('click', () => {
-                                    socket.emit('uninhibit', { dstId, network: networkName });
+                                    socket.emit('uninhibit', { srcId, network: networkName });
                                 });
                                 pageBtn.addEventListener('click', () => {
-                                    socket.emit('page', { dstId, network: networkName });
+                                    socket.emit('page', { srcId, network: networkName });
                                 });
                             }
                         });
