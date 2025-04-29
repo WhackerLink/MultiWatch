@@ -156,18 +156,21 @@
                                 const uninhibitBtn = row.querySelector('.uninhibit-btn');
                                 const pageBtn = row.querySelector('.page-btn');
 
-                                const dstId = affiliation.dstId;
-                                const srcId = affiliation.srcId;
+                                const dstId = affiliation.dstId.toString();
+                                const srcId = affiliation.srcId.toString();
                                 const networkName = network.name;
 
+                                console.log(affiliation);
+                                console.log(srcId);
+
                                 inhibitBtn.addEventListener('click', () => {
-                                    socket.emit('inhibit', { srcId, network: networkName });
+                                    socket.emit('inhibit', { dstId: srcId, network: networkName });
                                 });
                                 uninhibitBtn.addEventListener('click', () => {
-                                    socket.emit('uninhibit', { srcId, network: networkName });
+                                    socket.emit('uninhibit', { dstId: srcId, network: networkName });
                                 });
                                 pageBtn.addEventListener('click', () => {
-                                    socket.emit('page', { srcId, network: networkName });
+                                    socket.emit('page', { dstId: srcId, network: networkName });
                                 });
                             }
                         });
