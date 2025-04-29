@@ -61,6 +61,24 @@
                     <% }) %>
                 </div>
             </li>
+
+
+            <% if (loggedIn) { %>
+                <li class="nav-item me-2">
+                    <a href="/command" class="btn btn-success">Command</a>
+                </li>
+                <li class="nav-item me-2">
+                    <a href="/users" class="btn btn-success">Users</a>
+                </li>
+                <li class="nav-item me-2">
+                    <a href="/logout" class="btn btn-danger">Logout</a>
+                </li>
+            <% } else { %>
+                <li class="nav-item me-2">
+                    <a href="/login" class="btn btn-success">Login</a>
+                </li>
+            <% } %>
+
             <li class="nav-item">
                 <button id="darkModeToggle" class="btn btn-outline-secondary">
                     <span id="toggleLabel">Dark Mode</span>

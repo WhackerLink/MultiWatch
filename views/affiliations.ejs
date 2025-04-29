@@ -74,6 +74,8 @@
 </div>
 
 <script>
+    const loggedIn = <%= loggedIn ? 'true' : 'false' %>;
+
     document.addEventListener('DOMContentLoaded', function() {
         const socket = io();
         const darkModeToggle = document.getElementById('darkModeToggle');
@@ -114,13 +116,16 @@
                 networkBox.innerHTML = `
                     <h2>${network.name}</h2>
                     <table class="table table-bordered ${body.classList.contains('dark-mode') ? 'table-dark' : ''}">
-                        <thead>
-                            <tr>
-                                <th>Source ID</th>
-                                <th>Destination ID</th>
-                                <th>Site</th>
-                            </tr>
-                        </thead>
+                            <thead>
+                                <tr>
+                                    <th>Source ID</th>
+                                    <th>Destination ID</th>
+                                    <th>Site</th>
+                                    <% if (loggedIn) { %>
+                                        <th>Actions</th>
+                                    <% } %>
+                                </tr>
+                            </thead>
                         <tbody class="affiliations-tbody">
                         </tbody>
                     </table>
@@ -136,8 +141,34 @@
                                 <td>${affiliation.srcId}</td>
                                 <td>${affiliation.dstId}</td>
                                 <td>${affiliation.site && affiliation.site.name ? affiliation.site.name : 'UNKNOWN'}</td>
+                                ${loggedIn ? `
+                                    <td>
+                                        <button class="btn btn-sm btn-danger me-1 inhibit-btn">Inhibit</button>
+                                        <button class="btn btn-sm btn-warning me-1 page-btn">Page</button>
+                                        <button class="btn btn-sm btn-success uninhibit-btn">Uninhibit</button>
+                                    </td>
+                                ` : ''}
                             `;
                             tableBody.appendChild(row);
+
+                            if (loggedIn) {
+                                const inhibitBtn = row.querySelector('.inhibit-btn');
+                                const uninhibitBtn = row.querySelector('.uninhibit-btn');
+                                const pageBtn = row.querySelector('.page-btn');
+
+                                const dstId = affiliation.dstId;
+                                const networkName = network.name;
+
+                                inhibitBtn.addEventListener('click', () => {
+                                    socket.emit('inhibit', { dstId, network: networkName });
+                                });
+                                uninhibitBtn.addEventListener('click', () => {
+                                    socket.emit('uninhibit', { dstId, network: networkName });
+                                });
+                                pageBtn.addEventListener('click', () => {
+                                    socket.emit('page', { dstId, network: networkName });
+                                });
+                            }
                         });
                     } else {
                         const row = document.createElement('tr');

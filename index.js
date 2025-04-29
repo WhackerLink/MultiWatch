@@ -27,6 +27,9 @@ import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import { fileURLToPath } from 'url';
+import bcrypt from 'bcrypt';
+import session from 'express-session';
+import { initDB, getDB } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
@@ -42,6 +45,14 @@ if (cfgIndex === -1 || process.argv.length <= cfgIndex + 1) {
 }
 const configPath = process.argv[cfgIndex + 1];
 const config     = yaml.load(fs.readFileSync(configPath, 'utf8'));
+
+await initDB();
+
+app.use(session({
+    secret: 'supersecretkey',
+    resave: false,
+    saveUninitialized: false
+}));
 
 const restMap = config.restServers.reduce((m, rs) => {
     m[rs.name] = rs.url;
@@ -87,6 +98,11 @@ const ResponseType = Object.freeze({
 
 let reports = [];
 let sites   = new Map();
+
+function requireLogin(req, res, next) {
+    if (!req.session.userId) return res.redirect('/login');
+    next();
+}
 
 function makeUrl(network, endpointPath) {
     const base = restMap[network.restServer];
@@ -141,7 +157,12 @@ async function sendCommand(cmd, payload, networkName) {
 
     try {
         const url = makeUrl(net, `/command/${cmd}`);
-        const res = await axios.post(url, payload);
+        const fixedPayload = {
+            ...payload,
+            DstId: String(payload.DstId)
+        };
+        const res = await axios.post(url, fixedPayload);
+        console.log(`Sent ${cmd.toUpperCase()} to ${fixedPayload.DstId}`);
         io.emit('networkUpdate', { network: net.name, success: res.data.success });
     } catch (e) {
         console.error(`Error ${cmd} on ${net.name}:`, e.message);
@@ -151,14 +172,76 @@ async function sendCommand(cmd, payload, networkName) {
 
 setInterval(fetchAllData, 1000);
 
-app.get('/',            (req, res) => res.render('index',        { networks: config.networks }));
-app.get('/reports',     (req, res) => res.render('reports',      { reports, networks: config.networks, hideLocBcast: config.disableLocationBcastReports }));
-app.get('/affiliations',(req, res) => res.render('affiliations', { networks: config.networks }));
+app.use(express.urlencoded({ extended: true }));
+
+app.get('/',            (req, res) => res.render('index',        { networks: config.networks, loggedIn: !!req.session.userId }));
+app.get('/reports',     (req, res) => res.render('reports',      { reports, networks: config.networks, hideLocBcast: config.disableLocationBcastReports, loggedIn: !!req.session.userId }));
+app.get('/affiliations', (req, res) => {
+    res.render('affiliations', {
+        networks: config.networks,
+        loggedIn: !!req.session.userId
+    });
+});
 app.get('/map/:networkName', (req, res) => {
     const net = config.networks.find(n => n.name === req.params.networkName);
     if (!net) return res.status(404).send('Network not found');
     sites.networkName = net.name;
-    res.render('map', { network: net, networks: config.networks, sites: Array.from(sites.values()) });
+    res.render('map', { network: net, networks: config.networks, sites: Array.from(sites.values()), loggedIn: !!req.session.userId });
+});
+
+app.get('/command', requireLogin, (req, res) => {
+    res.render('command', { networks: config.networks, loggedIn: !!req.session.userId });
+});
+
+app.get('/login', (req, res) => {
+    res.render('login', { error: null, loggedIn: !!req.session.userId });
+});
+
+app.get('/users', requireLogin, async (req, res) => {
+    const db = await getDB();
+    const users = await db.all('SELECT id, username FROM users');
+    res.render('users', { users, error: null, loggedIn: !!req.session.userId });
+});
+
+app.post('/users/add', requireLogin, async (req, res) => {
+    const db = await getDB();
+    const { username, password } = req.body;
+    if (!username || !password) {
+        const users = await db.all('SELECT id, username FROM users');
+        return res.render('users', { users, error: 'Username and password required' });
+    }
+    const existing = await db.get('SELECT id FROM users WHERE username = ?', username);
+    if (existing) {
+        const users = await db.all('SELECT id, username FROM users');
+        return res.render('users', { users, error: 'Username already exists' });
+    }
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await db.run('INSERT INTO users (username, password) VALUES (?, ?)', username, hashedPassword);
+    res.redirect('/users');
+});
+
+app.post('/users/delete', requireLogin, async (req, res) => {
+    const db = await getDB();
+    const { id } = req.body;
+    await db.run('DELETE FROM users WHERE id = ?', id);
+    res.redirect('/users');
+});
+
+app.post('/login', async (req, res) => {
+    const db = await getDB();
+    const { username, password } = req.body;
+    const user = await db.get('SELECT * FROM users WHERE username = ?', username);
+    if (user && await bcrypt.compare(password, user.password)) {
+        req.session.userId = user.id;
+        return res.redirect('/');
+    }
+    res.render('login', { error: 'Invalid username or password' });
+});
+
+app.get('/logout', (req, res) => {
+    req.session.destroy(() => {
+        res.redirect('/login');
+    });
 });
 
 config.networks.forEach(net => {
@@ -212,4 +295,5 @@ server.listen(config.listenPort, config.bindAddress, () => {
 io.on('connection', sock => {
     sock.on('inhibit',   ({ dstId, network }) => sendCommand('inhibit',   { DstId: dstId }, network));
     sock.on('uninhibit', ({ dstId, network }) => sendCommand('uninhibit', { DstId: dstId }, network));
+    sock.on('page', ({ dstId, network }) => sendCommand('page', { DstId: dstId }, network));
 });
