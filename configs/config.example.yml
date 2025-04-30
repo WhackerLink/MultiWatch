@@ -15,6 +15,8 @@ restServers:
   - name: "Dev Server 1"
     # URL to connect to (REST)
     url: "http://127.0.0.1:3002"
+    # Password for the REST server
+    password: "PASSWORD"
 
 # List of networks to connect to
 networks:
@@ -27,11 +29,11 @@ networks:
     # Address to listen for reports
     bindAddress: 127.0.0.1
 
-    # Textual alias for the network
-  - name: "Example Master 2"
-    # Internal name of the REST server for this Master
-    restServer: "Dev Server 1"
-    # Port to listen for reports
-    listenPort: 3006
-    # Address to listen for reports
-    bindAddress: 127.0.0.1
+#    # Textual alias for the network
+#  - name: "Example Master 2"
+#    # Internal name of the REST server for this Master
+#    restServer: "Dev Server 1"
+#    # Port to listen for reports
+#    listenPort: 3006
+#    # Address to listen for reports
+#    bindAddress: 127.0.0.1

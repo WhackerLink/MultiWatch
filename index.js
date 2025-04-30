@@ -26,6 +26,7 @@ import { Server } from 'socket.io';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcrypt';
 import session from 'express-session';
@@ -58,10 +59,14 @@ const sessionMiddleware = session({
 
 app.use(sessionMiddleware);
 
-const restMap = config.restServers.reduce((m, rs) => {
-    m[rs.name] = rs.url;
-    return m;
-}, {});
+const restMap = {};
+const restAuthMap = {};
+
+config.restServers.forEach(rs => {
+    restMap[rs.name] = rs.url;
+    const hash = crypto.createHash('sha256').update(rs.password).digest('hex').toUpperCase();
+    restAuthMap[rs.name] = hash;
+});
 
 app.set('views',   path.join(__dirname, 'views'));
 app.set('view engine','ejs');
@@ -108,18 +113,30 @@ function requireLogin(req, res, next) {
     next();
 }
 
-function makeUrl(network, endpointPath) {
+function makeRequestConfig(network, endpointPath, method = 'get', data = null) {
     const base = restMap[network.restServer];
-    if (!base) throw new Error(`Unknown restServer: ${network.restServer}`);
+    const auth = restAuthMap[network.restServer];
+    if (!base || !auth) throw new Error(`Unknown restServer: ${network.restServer}`);
+
     const masterSegment = encodeURIComponent(network.name);
-    return `${base}/api/${masterSegment}${endpointPath}`;
+    const url = `${base}/api/${masterSegment}${endpointPath}`;
+    const headers = {
+        'WLINK-AUTH-HDR': auth
+    };
+
+    return {
+        method,
+        url,
+        headers,
+        ...(data && { data })
+    };
 }
 
 async function fetchVoiceChannelData() {
     const promises = config.networks.map(async net => {
         try {
-            const url = makeUrl(net, '/voiceChannel/query');
-            const res = await axios.get(url);
+            const urlConfig = makeRequestConfig(net, '/voiceChannel/query');
+            const res = await axios(urlConfig);
             return { name: net.name, data: res.data, status: 'connected' };
         } catch (e) {
             console.error(`voiceChannel fetch failed for ${net.name}:`, e.message);
@@ -133,8 +150,8 @@ async function fetchVoiceChannelData() {
 async function fetchAffiliationsData() {
     const promises = config.networks.map(async net => {
         try {
-            const url = makeUrl(net, '/affiliations');
-            const res = await axios.get(url);
+            const urlConfig = makeRequestConfig(net, '/affiliations');
+            const res = await axios(urlConfig);
             return { name: net.name, data: res.data, status: 'connected' };
         } catch (e) {
             console.error(`affiliations fetch failed for ${net.name}:`, e.message);
@@ -160,12 +177,12 @@ async function sendCommand(cmd, payload, networkName) {
     }
 
     try {
-        const url = makeUrl(net, `/command/${cmd}`);
         const fixedPayload = {
             ...payload,
             DstId: String(payload.DstId)
         };
-        const res = await axios.post(url, fixedPayload);
+        const urlConfig = makeRequestConfig(net, `/command/${cmd}`, 'post', fixedPayload);
+        const res = await axios(urlConfig);
         console.log(`Sent ${cmd.toUpperCase()} to ${fixedPayload.DstId}`);
         io.emit('networkUpdate', { network: net.name, success: res.data.success });
     } catch (e) {
