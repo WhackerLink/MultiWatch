@@ -29,6 +29,8 @@ import axios from 'axios';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcrypt';
 import session from 'express-session';
+import cookie from 'cookie';
+import cookieParser from 'cookie-parser';
 import { initDB, getDB } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -48,11 +50,13 @@ const config     = yaml.load(fs.readFileSync(configPath, 'utf8'));
 
 await initDB();
 
-app.use(session({
+const sessionMiddleware = session({
     secret: 'supersecretkey',
     resave: false,
     saveUninitialized: false
-}));
+});
+
+app.use(sessionMiddleware);
 
 const restMap = config.restServers.reduce((m, rs) => {
     m[rs.name] = rs.url;
@@ -292,8 +296,29 @@ server.listen(config.listenPort, config.bindAddress, () => {
     console.log(`Multi Watch UI on http://${config.bindAddress}:${config.listenPort}`);
 });
 
-io.on('connection', sock => {
-    sock.on('inhibit',   ({ dstId, network }) => sendCommand('inhibit',   { DstId: dstId }, network));
-    sock.on('uninhibit', ({ dstId, network }) => sendCommand('uninhibit', { DstId: dstId }, network));
-    sock.on('page', ({ dstId, network }) => sendCommand('page', { DstId: dstId }, network));
+io.engine.use(sessionMiddleware);
+
+io.on('connection', (sock) => {
+    console.log(`Socket connected: ${sock.id}`);
+
+    const session = sock.request.session;
+
+    function isAuthenticated() {
+        return session && session.userId;
+    }
+
+    sock.on('inhibit', ({ dstId, network }) => {
+        if (!isAuthenticated()) return console.warn(`Unauthorized inhibit attempt from ${sock.id}`);
+        sendCommand('inhibit', { DstId: dstId }, network).then(r =>{});
+    });
+
+    sock.on('uninhibit', ({ dstId, network }) => {
+        if (!isAuthenticated()) return console.warn(`Unauthorized uninhibit attempt from ${sock.id}`);
+        sendCommand('uninhibit', { DstId: dstId }, network).then(r =>{});
+    });
+
+    sock.on('page', ({ dstId, network }) => {
+        if (!isAuthenticated()) return console.warn(`Unauthorized page attempt from ${sock.id}`);
+        sendCommand('page', {DstId: dstId}, network).then(r =>{});
+    });
 });
